@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Master</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            <span>LangMaster</span>
+        </div>
+        
+        <div class="nav-buttons">
+            <button id="btn-home" class="nav-btn" onclick="app.switchTab('home')">
+                <i class="fas fa-home"></i> <span>Главная</span>
+            </button>
+            <button id="btn-lessons" class="nav-btn" onclick="app.switchTab('lessons')">
+                <i class="fas fa-book-open"></i> <span>Уроки</span>
+            </button>
+            <button id="btn-dictionary" class="nav-btn" onclick="app.switchTab('dictionary')">
+                <i class="fas fa-book"></i> <span>Словарь</span>
+            </button>
+            <button id="btn-quiz" class="nav-btn" onclick="app.switchTab('quiz')">
+                <i class="fas fa-dumbbell"></i> <span>Тренировка</span>
+            </button>
+        </div>
+
+        <div class="language-switch">
+            <select id="lang-switch">
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="en">🇬🇧 English</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div id="content-area"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
