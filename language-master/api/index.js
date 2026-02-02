@@ -1,10 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const pool = require('../db');
+const pool = require('../db'); // Обратите внимание на две точки, так как мы теперь в папке api
 const crypto = require('crypto');
 const jose = require('jose');
-const fileUpload = require('express-fileupload');
+const fileUpload = require('express-fileupload'); // Vercel не поддерживает сохранение файлов на диск
 const fs = require('fs');
 
 const app = express();
@@ -12,19 +12,21 @@ const SECRET = new TextEncoder().encode('super-secret-key-change-it-in-productio
 
 app.use(cors());
 app.use(express.json());
+
+// В Vercel статика (public) раздается автоматически, эти строки здесь не нужны
+// app.use(express.static...); 
 app.use(fileUpload());
 
-// Раздаем статику (сайт и картинки)
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Создаем папку uploads, если её нет
+// Создаем папку uploads, если её нет (чтобы не было ошибок локально)
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
-// === ХЕЛПЕРЫ ДЛЯ ПАРОЛЕЙ (CRYPTO) ===
+// === ХЕЛПЕРЫ ДЛЯ ПАРОЛЕЙ ===
 function hashPassword(password) {
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -38,8 +40,13 @@ function verifyPassword(password, stored) {
 }
 
 // ==========================================
-// 1. АВТОРИЗАЦИЯ И ПОЛЬЗОВАТЕЛИ
+// МАРШРУТЫ API
 // ==========================================
+
+// Тестовый маршрут, чтобы проверить работу
+app.get('/api', (req, res) => {
+    res.json({ status: 'Server is running on Vercel!' });
+});
 
 // Регистрация
 app.post('/api/auth/register', async (req, res) => {
@@ -54,7 +61,7 @@ app.post('/api/auth/register', async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) {
-        res.status(400).json({ error: 'Этот Email уже занят' });
+        res.status(400).json({ error: 'Ошибка регистрации или Email занят' });
     }
 });
 
@@ -82,27 +89,36 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Загрузка аватарки
+// Загрузка аватарки (ЗАГЛУШКА ДЛЯ VERCEL)
+// Vercel Read-Only File System не дает сохранять файлы.
+// Для реальной работы нужно подключать Cloudinary или AWS S3.
 app.post('/api/upload-avatar', async (req, res) => {
-    if (!req.files || !req.files.avatar) return res.status(400).json({ error: 'Файл не найден' });
+    // Если мы на Vercel (в облаке), выдаем ошибку, так как там нельзя писать файлы
+    if (process.env.VERCEL) {
+        return res.status(400).json({ error: 'На Vercel загрузка файлов не работает (Read-only system)' });
+    }
+
+    // А вот локально этот код сработает:
+    if (!req.files || !req.files.avatar) {
+        return res.status(400).json({ error: 'Файл не найден' });
+    }
 
     const userId = req.body.userId;
     const file = req.files.avatar;
     const ext = path.extname(file.name);
     const newName = `user_${userId}_${Date.now()}${ext}`;
-    const uploadPath = path.join(uploadDir, newName);
+    const uploadPath = path.join(__dirname, '../uploads', newName);
 
     file.mv(uploadPath, async (err) => {
-        if (err) return res.status(500).send(err);
+        if (err) {
+            console.error(err);
+            return res.status(500).send(err);
+        }
         const url = `/uploads/${newName}`;
         await pool.execute('UPDATE users SET avatar = ? WHERE user_id = ?', [url, userId]);
         res.json({ avatarUrl: url });
     });
 });
-
-// ==========================================
-// 2. ФУНКЦИОНАЛ УЧИТЕЛЯ
-// ==========================================
 
 // Получить статистику по классам
 app.get('/api/teacher/dashboard/:id', async (req, res) => {
@@ -142,10 +158,7 @@ app.post('/api/teacher/add-student', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ==========================================
-// 3. ПРОГРЕСС УЧЕНИКА
-// ==========================================
-
+// ПРОГРЕСС
 app.post('/api/progress', async (req, res) => {
     try {
         await pool.execute('INSERT IGNORE INTO user_progress (user_id, lesson_id) VALUES (?, ?)', [req.body.userId, req.body.lessonId]);
@@ -167,11 +180,7 @@ app.get('/api/progress/:userId', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ==========================================
-// 4. КОНТЕНТ (УРОКИ, СЛОВАРЬ, ТЕСТЫ)
-// ==========================================
-
-// 1. Получить список уроков
+// УРОКИ
 app.get('/api/lessons', async (req, res) => {
     const lang = req.query.lang || 'en';
     try {
@@ -181,12 +190,9 @@ app.get('/api/lessons', async (req, res) => {
             WHERE lang_code = ? 
             ORDER BY level_code, lesson_id`, [lang]);
         res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 2. Получить один урок + задания
 app.get('/api/lessons/:id', async (req, res) => {
     try {
         const [lesson] = await pool.execute('SELECT * FROM Lessons WHERE lesson_id = ?', [req.params.id]);
@@ -194,38 +200,35 @@ app.get('/api/lessons/:id', async (req, res) => {
 
         const [tasks] = await pool.execute('SELECT * FROM Lesson_Tasks WHERE lesson_id = ?', [req.params.id]);
 
-        res.json({
-            lesson: lesson[0],
-            tasks: tasks 
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.json({ lesson: lesson[0], tasks: tasks });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Словарь
+// СЛОВАРЬ
 app.get('/api/words', async (req, res) => {
     const lang = req.query.lang || 'en';
     try {
         const [rows] = await pool.execute('SELECT * FROM Words WHERE lang_code = ? ORDER BY word', [lang]);
         res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. Тесты (Quiz) - случайные 5 слов
+// ТЕСТЫ
 app.get('/api/quiz-words', async (req, res) => {
     const lang = req.query.lang || 'en';
     try {
         const [rows] = await pool.execute('SELECT * FROM Words WHERE lang_code = ? ORDER BY RAND() LIMIT 5', [lang]);
         res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер запущен: http://localhost:${PORT}`);
-});
+// ВАЖНО: ДЛЯ VERCEL МЫ ЭКСПОРТИРУЕМ APP, А НЕ ЗАПУСКАЕМ ЕГО
+module.exports = app;
+
+
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Сервер запущен локально: http://localhost:${PORT}`);
+    });
+}
