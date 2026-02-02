@@ -10,37 +10,125 @@
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-graduation-cap"></i>
-            <span>LangMaster</span>
-        </div>
-        
-        <div class="nav-buttons">
-            <button id="btn-home" class="nav-btn" onclick="app.switchTab('home')">
-                <i class="fas fa-home"></i> <span>Главная</span>
-            </button>
-            <button id="btn-lessons" class="nav-btn" onclick="app.switchTab('lessons')">
-                <i class="fas fa-book-open"></i> <span>Уроки</span>
-            </button>
-            <button id="btn-dictionary" class="nav-btn" onclick="app.switchTab('dictionary')">
-                <i class="fas fa-book"></i> <span>Словарь</span>
-            </button>
-            <button id="btn-quiz" class="nav-btn" onclick="app.switchTab('quiz')">
-                <i class="fas fa-dumbbell"></i> <span>Тренировка</span>
-            </button>
-        </div>
-
-        <div class="language-switch">
-            <select id="lang-switch">
-                <option value="ru">🇷🇺 Русский</option>
-                <option value="en">🇬🇧 English</option>
-            </select>
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="logo-anim">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h1>LangMaster</h1>
+            <p>Загрузка знаний...</p>
         </div>
     </div>
 
-    <div class="main-content">
-        <div id="content-area"></div>
+    <div id="auth-screen" style="display: none;">
+        <div class="auth-container">
+            <div class="auth-header">
+                <i class="fas fa-user-graduate logo-icon"></i>
+                <h2 id="auth-title">Вход в систему</h2>
+            </div>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="login-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="login-pass" placeholder="Пароль" required>
+                </div>
+                <button type="submit" class="primary-btn">Войти</button>
+                <p class="switch-auth">Нет аккаунта? <a href="#" onclick="ui.showRegister()">Зарегистрироваться</a></p>
+            </form>
+
+            <form id="register-form" style="display: none;">
+                <div class="role-selector">
+                    <label class="radio-label">
+                        <input type="radio" name="role" value="student" checked> <span>🎓 Ученик</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="role" value="teacher"> <span>👨‍🏫 Учитель</span>
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="reg-name" placeholder="Ваше Имя" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="reg-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="reg-pass" placeholder="Пароль" required>
+                </div>
+                <button type="submit" class="primary-btn">Создать аккаунт</button>
+                <p class="switch-auth">Есть аккаунт? <a href="#" onclick="ui.showLogin()">Войти</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>LangMaster</span>
+            </div>
+
+            <div class="user-profile-mini">
+                <div class="avatar-container">
+                    <img src="" id="sidebar-avatar" alt="Avatar">
+                    <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+                    <button class="edit-avatar-btn" onclick="document.getElementById('avatar-upload').click()">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="user-info">
+                    <span id="user-name-display">Имя</span>
+                    <small id="user-id-display">ID: 0</small>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="btn-home" class="nav-btn" onclick="app.tab('home')">
+                    <i class="fas fa-home"></i> <span>Главная</span>
+                </button>
+                
+                <div id="student-nav">
+                    <button id="btn-lessons" class="nav-btn" onclick="app.tab('lessons')">
+                        <i class="fas fa-book-open"></i> <span>Уроки</span>
+                    </button>
+                    <button id="btn-dictionary" class="nav-btn" onclick="app.tab('dictionary')">
+                        <i class="fas fa-book"></i> <span>Словарь</span>
+                    </button>
+                    <button id="btn-quiz" class="nav-btn" onclick="app.tab('quiz')">
+                        <i class="fas fa-dumbbell"></i> <span>Тренировка</span>
+                    </button>
+                </div>
+
+                <div id="teacher-nav" style="display: none;">
+                    <button id="btn-dashboard" class="nav-btn" onclick="app.tab('dashboard')">
+                        <i class="fas fa-chalkboard-teacher"></i> <span>Мои классы</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="language-switch">
+                <select id="lang-switch">
+                    <option value="ru">🇷🇺 Русский</option>
+                    <option value="en">🇬🇧 English</option>
+                </select>
+            </div>
+
+            <button class="nav-btn logout-btn" onclick="auth.logout()" style="margin-top: 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c;">
+                <i class="fas fa-sign-out-alt"></i> <span>Выйти</span>
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div id="content-area"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>

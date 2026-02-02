@@ -3,11 +3,6 @@
 # ==============================
 node_modules/
 
-# lock-файлы
-api/package-lock.json
-
-# package.json только в api
-api/package.json
 
 
 # ==============================
