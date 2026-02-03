@@ -1,26 +1,27 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const pool = require('../db'); 
+const pool = require('../db');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken'); 
-const fileUpload = require('express-fileupload'); 
+const jwt = require('jsonwebtoken'); // Используем правильную библиотеку
+const fileUpload = require('express-fileupload');
 const fs = require('fs');
 
 const app = express();
-const SECRET = 'super-secret-key-change-it-in-production'; 
+const SECRET = 'super-secret-key-change-it-in-production';
 
 app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
 
-app.use(express.static(path.join(__dirname, '../public')));
-// На Vercel папки uploads физически нет, поэтому эту строку оборачиваем в проверку
+// На Vercel папки uploads нет, раздаем статику только если папка существует
 if (!process.env.VERCEL) {
     app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 }
+app.use(express.static(path.join(__dirname, '../public')));
 
-// === ИСПРАВЛЕНИЕ: Не создаем папку на Vercel ===
+// === ИСПРАВЛЕНИЕ: Создаем папку uploads ТОЛЬКО на локальном компьютере ===
+// Vercel запрещает создание папок, поэтому мы пропускаем этот шаг в облаке
 if (!process.env.VERCEL) {
     const uploadDir = path.join(__dirname, '../uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -55,7 +56,7 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const hash = hashPassword(password);
         const userRole = role === 'teacher' ? 'teacher' : 'student';
-        
+
         await pool.execute(
             'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
             [name, email, hash, userRole]
@@ -78,14 +79,14 @@ app.post('/api/auth/login', async (req, res) => {
         const user = users[0];
 
         const token = jwt.sign(
-            { id: user.user_id, role: user.role }, 
-            SECRET,                                
-            { expiresIn: '24h' }                   
+            { id: user.user_id, role: user.role },
+            SECRET,
+            { expiresIn: '24h' }
         );
 
-        res.json({ 
-            token, 
-            user: { id: user.user_id, name: user.name, role: user.role, avatar: user.avatar } 
+        res.json({
+            token,
+            user: { id: user.user_id, name: user.name, role: user.role, avatar: user.avatar }
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -94,9 +95,9 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Загрузка аватарки
 app.post('/api/upload-avatar', async (req, res) => {
-    // ЗАГЛУШКА ДЛЯ VERCEL: Загрузка файлов не будет работать
+    // ВАЖНО: На Vercel нельзя сохранять файлы. Выдаем ошибку.
     if (process.env.VERCEL) {
-        return res.status(400).json({ error: 'На Vercel загрузка файлов отключена (Read-only system)' });
+        return res.status(400).json({ error: 'Загрузка файлов отключена на Vercel (Read-only system)' });
     }
 
     if (!req.files || !req.files.avatar) {
@@ -123,8 +124,9 @@ app.post('/api/upload-avatar', async (req, res) => {
 // Получить статистику по классам
 app.get('/api/teacher/dashboard/:id', async (req, res) => {
     try {
+        // Используем маленькие буквы для таблиц (classes, users, class_members)
         const [classes] = await pool.execute('SELECT * FROM classes WHERE teacher_id = ?', [req.params.id]);
-        
+
         for (let cls of classes) {
             const [students] = await pool.execute(`
                 SELECT u.user_id, u.name, u.avatar,
@@ -180,14 +182,15 @@ app.get('/api/progress/:userId', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// УРОКИ
+// УРОКИ (Исправлен регистр букв для Linux)
 app.get('/api/lessons', async (req, res) => {
     const lang = req.query.lang || 'en';
     try {
+        // ВАЖНО: lessons вместо Lessons
         const [rows] = await pool.execute(`
-            SELECT lesson_id, level_code, title_ru, title_en, description_ru 
-            FROM Lessons 
-            WHERE lang_code = ? 
+            SELECT lesson_id, level_code, title_ru, title_en, description_ru
+            FROM lessons
+            WHERE lang_code = ?
             ORDER BY level_code, lesson_id`, [lang]);
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -195,29 +198,33 @@ app.get('/api/lessons', async (req, res) => {
 
 app.get('/api/lessons/:id', async (req, res) => {
     try {
-        const [lesson] = await pool.execute('SELECT * FROM Lessons WHERE lesson_id = ?', [req.params.id]);
+        // ВАЖНО: lessons вместо Lessons
+        const [lesson] = await pool.execute('SELECT * FROM lessons WHERE lesson_id = ?', [req.params.id]);
         if (lesson.length === 0) return res.status(404).json({ error: 'Урок не найден' });
 
-        const [tasks] = await pool.execute('SELECT * FROM Lesson_Tasks WHERE lesson_id = ?', [req.params.id]);
+        // ВАЖНО: lesson_tasks вместо Lesson_Tasks
+        const [tasks] = await pool.execute('SELECT * FROM lesson_tasks WHERE lesson_id = ?', [req.params.id]);
 
         res.json({ lesson: lesson[0], tasks: tasks });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// СЛОВАРЬ
+// СЛОВАРЬ (Исправлен регистр)
 app.get('/api/words', async (req, res) => {
     const lang = req.query.lang || 'en';
     try {
-        const [rows] = await pool.execute('SELECT * FROM Words WHERE lang_code = ? ORDER BY word', [lang]);
+        // ВАЖНО: words вместо Words
+        const [rows] = await pool.execute('SELECT * FROM words WHERE lang_code = ? ORDER BY word', [lang]);
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ТЕСТЫ
+// ТЕСТЫ (Исправлен регистр)
 app.get('/api/quiz-words', async (req, res) => {
     const lang = req.query.lang || 'en';
     try {
-        const [rows] = await pool.execute('SELECT * FROM Words WHERE lang_code = ? ORDER BY RAND() LIMIT 5', [lang]);
+        // ВАЖНО: words вместо Words
+        const [rows] = await pool.execute('SELECT * FROM words WHERE lang_code = ? ORDER BY RAND() LIMIT 5', [lang]);
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
