@@ -1,26 +1,24 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const pool = require('../db'); // Обратите внимание на две точки, так как мы теперь в папке api
+const pool = require('../db'); 
 const crypto = require('crypto');
-const jose = require('jose');
-const fileUpload = require('express-fileupload'); // Vercel не поддерживает сохранение файлов на диск
+const jwt = require('jsonwebtoken'); // <--- ПОМЕНЯЛИ БИБЛИОТЕКУ
+const fileUpload = require('express-fileupload'); 
 const fs = require('fs');
 
 const app = express();
-const SECRET = new TextEncoder().encode('super-secret-key-change-it-in-production');
+
+// <--- УПРОСТИЛИ КЛЮЧ (для jsonwebtoken нужна просто строка)
+const SECRET = 'super-secret-key-change-it-in-production'; 
 
 app.use(cors());
 app.use(express.json());
-
-// В Vercel статика (public) раздается автоматически, эти строки здесь не нужны
-// app.use(express.static...); 
 app.use(fileUpload());
 
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Создаем папку uploads, если её нет (чтобы не было ошибок локально)
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
@@ -43,7 +41,6 @@ function verifyPassword(password, stored) {
 // МАРШРУТЫ API
 // ==========================================
 
-// Тестовый маршрут, чтобы проверить работу
 app.get('/api', (req, res) => {
     res.json({ status: 'Server is running on Vercel!' });
 });
@@ -65,7 +62,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Вход
+// Вход (ЗДЕСЬ ГЛАВНОЕ ИЗМЕНЕНИЕ)
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -75,10 +72,13 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         const user = users[0];
-        const token = await new jose.SignJWT({ id: user.user_id, role: user.role })
-            .setProtectedHeader({ alg: 'HS256' })
-            .setExpirationTime('24h')
-            .sign(SECRET);
+
+        // <--- НОВЫЙ СПОСОБ СОЗДАНИЯ ТОКЕНА
+        const token = jwt.sign(
+            { id: user.user_id, role: user.role }, // Данные внутри токена
+            SECRET,                                // Секретный ключ
+            { expiresIn: '24h' }                   // Срок действия
+        );
 
         res.json({ 
             token, 
@@ -89,16 +89,12 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Загрузка аватарки (ЗАГЛУШКА ДЛЯ VERCEL)
-// Vercel Read-Only File System не дает сохранять файлы.
-// Для реальной работы нужно подключать Cloudinary или AWS S3.
+// Загрузка аватарки
 app.post('/api/upload-avatar', async (req, res) => {
-    // Если мы на Vercel (в облаке), выдаем ошибку, так как там нельзя писать файлы
     if (process.env.VERCEL) {
         return res.status(400).json({ error: 'На Vercel загрузка файлов не работает (Read-only system)' });
     }
 
-    // А вот локально этот код сработает:
     if (!req.files || !req.files.avatar) {
         return res.status(400).json({ error: 'Файл не найден' });
     }
@@ -222,9 +218,7 @@ app.get('/api/quiz-words', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ВАЖНО: ДЛЯ VERCEL МЫ ЭКСПОРТИРУЕМ APP, А НЕ ЗАПУСКАЕМ ЕГО
 module.exports = app;
-
 
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;
