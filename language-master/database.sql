@@ -23,12 +23,9 @@ DROP TABLE IF EXISTS `class_members`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `class_members` (
-  `member_id` int NOT NULL AUTO_INCREMENT,
-  `class_id` int DEFAULT NULL,
-  `student_id` int DEFAULT NULL,
-  `joined_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`member_id`),
-  UNIQUE KEY `unique_class_student` (`class_id`,`student_id`),
+  `class_id` int NOT NULL,
+  `student_id` int NOT NULL,
+  PRIMARY KEY (`class_id`,`student_id`),
   KEY `student_id` (`student_id`),
   CONSTRAINT `class_members_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`class_id`) ON DELETE CASCADE,
   CONSTRAINT `class_members_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
@@ -41,6 +38,7 @@ CREATE TABLE `class_members` (
 
 LOCK TABLES `class_members` WRITE;
 /*!40000 ALTER TABLE `class_members` DISABLE KEYS */;
+INSERT INTO `class_members` VALUES (1,1);
 /*!40000 ALTER TABLE `class_members` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -53,16 +51,12 @@ DROP TABLE IF EXISTS `classes`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `classes` (
   `class_id` int NOT NULL AUTO_INCREMENT,
-  `teacher_id` int DEFAULT NULL,
+  `teacher_id` int NOT NULL,
   `class_name` varchar(100) NOT NULL,
-  `class_code` varchar(10) NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`class_id`),
-  UNIQUE KEY `class_code` (`class_code`),
   KEY `teacher_id` (`teacher_id`),
-  KEY `idx_class_code` (`class_code`),
   CONSTRAINT `classes_ibfk_1` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -71,6 +65,7 @@ CREATE TABLE `classes` (
 
 LOCK TABLES `classes` WRITE;
 /*!40000 ALTER TABLE `classes` DISABLE KEYS */;
+INSERT INTO `classes` VALUES (1,2,'10A');
 /*!40000 ALTER TABLE `classes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -255,13 +250,10 @@ DROP TABLE IF EXISTS `user_progress`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_progress` (
-  `progress_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `lesson_id` int NOT NULL,
-  `is_completed` tinyint(1) DEFAULT '1',
   `completed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`progress_id`),
-  KEY `idx_progress_user` (`user_id`),
+  PRIMARY KEY (`user_id`,`lesson_id`),
   CONSTRAINT `user_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -273,34 +265,6 @@ CREATE TABLE `user_progress` (
 LOCK TABLES `user_progress` WRITE;
 /*!40000 ALTER TABLE `user_progress` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_progress` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `user_stats`
---
-
-DROP TABLE IF EXISTS `user_stats`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `user_stats` (
-  `user_id` int NOT NULL,
-  `total_score` int DEFAULT '0',
-  `words_learned` int DEFAULT '0',
-  `streak` int DEFAULT '0',
-  `last_login` date DEFAULT NULL,
-  PRIMARY KEY (`user_id`),
-  CONSTRAINT `user_stats_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `user_stats`
---
-
-LOCK TABLES `user_stats` WRITE;
-/*!40000 ALTER TABLE `user_stats` DISABLE KEYS */;
-INSERT INTO `user_stats` VALUES (1,0,0,0,'2026-01-28'),(2,0,0,0,NULL);
-/*!40000 ALTER TABLE `user_stats` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -316,10 +280,10 @@ CREATE TABLE `users` (
   `email` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `role` enum('student','teacher') DEFAULT 'student',
+  `avatar` varchar(255) DEFAULT '/uploads/default.png',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
-  UNIQUE KEY `email` (`email`),
-  KEY `idx_user_email` (`email`)
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -329,7 +293,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Danila','danilmoiseev007@gmail.com','c78f3687518793501dac1920469c3294:dfd5dc780eb7b8b57aea8dd6d8749cafaac35693ad3fac3fc4e0b11202144a35ebadc31db7a7f1cf65fbb6729287ba0bd9a0f6da0fd8bcd0c2dd64675c9c0472','student','2026-01-27 17:00:14'),(2,'Victor','eminence738@gmail.com','18b2b3ee3b4b33ffdb6547fa4a24b0b4:180a42997f241901765b4bf69fd1ede7cbb937780db0d63b6912e88443ca4e8ee49e61850fbd7d6d9d737d75f7fc8b9f73bd24c1aa83d71f71b12e75b5d1c705','teacher','2026-01-28 15:06:28');
+INSERT INTO `users` VALUES (1,'Danila','danilmoiseev007@gmail.com','3b04344ed6a2972f927ee919677ba548:6447c5f2577f14ca1030cb01a0e6b86d786ee8c1d16e217cffaafdc8aad5c0e6e95ee69e002fe8cd399113cc43a60f4eb3dcd1361d0b18b32f26de97e05e77f4','student','/uploads/user_1_1770042000994.png','2026-01-30 14:25:21'),(2,'Gena','eminence738@gmail.com','fa8c7dbf5829f9400b5f675ad767c26d:26327d89d35dcc17a83ecd5b0605b5265d25c6eb80cd3d5d665e342fcdeb549a81bd4c66537b728738c029565dde39923829fb561e9e55f56d0f244cdf7faea9','teacher','/uploads/user_2_1769787909614.png','2026-01-30 15:44:14');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -374,4 +338,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-30 19:21:25
+-- Dump completed on 2026-02-02 23:53:59
