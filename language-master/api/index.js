@@ -3,13 +3,11 @@ const cors = require('cors');
 const path = require('path');
 const pool = require('../db'); 
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken'); // <--- ПОМЕНЯЛИ БИБЛИОТЕКУ
+const jwt = require('jsonwebtoken'); 
 const fileUpload = require('express-fileupload'); 
 const fs = require('fs');
 
 const app = express();
-
-// <--- УПРОСТИЛИ КЛЮЧ (для jsonwebtoken нужна просто строка)
 const SECRET = 'super-secret-key-change-it-in-production'; 
 
 app.use(cors());
@@ -17,11 +15,17 @@ app.use(express.json());
 app.use(fileUpload());
 
 app.use(express.static(path.join(__dirname, '../public')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// На Vercel папки uploads физически нет, поэтому эту строку оборачиваем в проверку
+if (!process.env.VERCEL) {
+    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+}
 
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+// === ИСПРАВЛЕНИЕ: Не создаем папку на Vercel ===
+if (!process.env.VERCEL) {
+    const uploadDir = path.join(__dirname, '../uploads');
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+    }
 }
 
 // === ХЕЛПЕРЫ ДЛЯ ПАРОЛЕЙ ===
@@ -62,7 +66,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Вход (ЗДЕСЬ ГЛАВНОЕ ИЗМЕНЕНИЕ)
+// Вход
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -73,11 +77,10 @@ app.post('/api/auth/login', async (req, res) => {
 
         const user = users[0];
 
-        // <--- НОВЫЙ СПОСОБ СОЗДАНИЯ ТОКЕНА
         const token = jwt.sign(
-            { id: user.user_id, role: user.role }, // Данные внутри токена
-            SECRET,                                // Секретный ключ
-            { expiresIn: '24h' }                   // Срок действия
+            { id: user.user_id, role: user.role }, 
+            SECRET,                                
+            { expiresIn: '24h' }                   
         );
 
         res.json({ 
@@ -91,8 +94,9 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Загрузка аватарки
 app.post('/api/upload-avatar', async (req, res) => {
+    // ЗАГЛУШКА ДЛЯ VERCEL: Загрузка файлов не будет работать
     if (process.env.VERCEL) {
-        return res.status(400).json({ error: 'На Vercel загрузка файлов не работает (Read-only system)' });
+        return res.status(400).json({ error: 'На Vercel загрузка файлов отключена (Read-only system)' });
     }
 
     if (!req.files || !req.files.avatar) {
