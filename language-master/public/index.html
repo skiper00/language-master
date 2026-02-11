@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <div id="splash-screen">
@@ -69,7 +71,7 @@
     </div>
 
     <div id="app-container" style="display: none;">
-        
+
         <div class="sidebar">
             <div class="logo">
                 <i class="fas fa-graduation-cap"></i>
@@ -77,24 +79,23 @@
             </div>
 
             <div class="user-profile-mini">
-                <div class="avatar-container">
-                    <img src="" id="sidebar-avatar" alt="Avatar">
-                    <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
-                    <button class="edit-avatar-btn" onclick="document.getElementById('avatar-upload').click()">
-                        <i class="fas fa-camera"></i>
-                    </button>
+                <div class="avatar-container" onclick="app.openAvatarSelector()" style="cursor:pointer"
+                    title="Сменить аватарку">
+                    <img id="sidebar-avatar" src="" class="mini-avatar"
+                        style="width:45px; height:45px; border-radius:50%; object-fit:cover; border:2px solid var(--primary);">
+                    <div class="edit-avatar-btn"><i class="fas fa-pen"></i></div>
                 </div>
                 <div class="user-info">
                     <span id="user-name-display">Имя</span>
                     <small id="user-id-display">ID: 0</small>
                 </div>
             </div>
-            
+
             <div class="nav-buttons">
                 <button id="btn-home" class="nav-btn" onclick="app.tab('home')">
                     <i class="fas fa-home"></i> <span>Главная</span>
                 </button>
-                
+
                 <div id="student-nav">
                     <button id="btn-lessons" class="nav-btn" onclick="app.tab('lessons')">
                         <i class="fas fa-book-open"></i> <span>Уроки</span>
@@ -121,7 +122,8 @@
                 </select>
             </div>
 
-            <button class="nav-btn logout-btn" onclick="auth.logout()" style="margin-top: 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c;">
+            <button class="nav-btn logout-btn" onclick="auth.logout()"
+                style="margin-top: 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c;">
                 <i class="fas fa-sign-out-alt"></i> <span>Выйти</span>
             </button>
         </div>
@@ -130,7 +132,15 @@
             <div id="content-area"></div>
         </div>
     </div>
-
+    <div id="avatar-modal" class="modal-overlay" onclick="if(event.target === this) this.classList.remove('active')">
+        <div class="student-modal" style="text-align:center; max-width:400px;">
+            <button class="close-modal"
+                onclick="document.getElementById('avatar-modal').classList.remove('active')">×</button>
+            <h3 style="color:#2c3e50; margin-bottom:20px;">Выберите персонажа</h3>
+            <div id="avatar-grid" class="avatar-grid"></div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
+
 </html>

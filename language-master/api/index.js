@@ -42,12 +42,130 @@ function verifyPassword(password, stored) {
     return hash === verifyHash;
 }
 
+// Функция проверки и выдачи достижений
+async function checkAchievements(userId) {
+    const newBadges = [];
+
+    // 1. Получаем статистику пользователя
+    const [stats] = await pool.execute(`
+        SELECT 
+            (SELECT COUNT(*) FROM user_progress WHERE user_id = ?) as lessons,
+            streak
+        FROM users WHERE user_id = ?
+    `, [userId, userId]);
+    
+    const userStats = stats[0];
+
+    // 2. Список условий (ID награды -> Условие)
+    const rules = [
+        { id: 1, condition: userStats.lessons >= 1 }, // Первые шаги
+        { id: 2, condition: userStats.lessons >= 5 }, // Студент
+        { id: 3, condition: userStats.streak >= 3 }   // В огне
+    ];
+
+    for (let rule of rules) {
+        if (rule.condition) {
+            // Пробуем выдать (INSERT IGNORE проигнорирует, если уже есть)
+            const [res] = await pool.execute(
+                'INSERT IGNORE INTO user_achievements (user_id, ach_id) VALUES (?, ?)',
+                [userId, rule.id]
+            );
+            // Если награда была добавлена только что (affectedRows > 0)
+            if (res.affectedRows > 0) {
+                // Начисляем XP за награду
+                await pool.execute(`
+                    UPDATE users u 
+                    JOIN achievements a ON a.ach_id = ?
+                    SET u.xp_points = u.xp_points + a.xp_reward 
+                    WHERE u.user_id = ?
+                `, [rule.id, userId]);
+                newBadges.push(rule.id);
+            }
+        }
+    }
+    return newBadges;
+}
+
 // ==========================================
 // МАРШРУТЫ API
 // ==========================================
 
 app.get('/api', (req, res) => {
     res.json({ status: 'Server is running on Vercel!' });
+});
+
+
+// НОВЫЙ МАРШРУТ: Реальная статистика активности за 7 дней
+// ОБНОВЛЕННЫЙ МАРШРУТ (С форматированием даты)
+// 1. ОБНОВЛЕННЫЙ МАРШРУТ АКТИВНОСТИ (С ФИЛЬТРОМ ПО КЛАССУ)
+app.get('/api/teacher/stats/activity/:teacherId', async (req, res) => {
+    try {
+        const teacherId = req.params.teacherId;
+        const classId = req.query.classId; // Получаем ID класса из параметров ?classId=...
+
+        let sql = `
+            SELECT DATE_FORMAT(up.completed_at, '%Y-%m-%d') as dateStr, COUNT(*) as count
+            FROM user_progress up
+            JOIN class_members cm ON up.user_id = cm.student_id
+            JOIN classes c ON cm.class_id = c.class_id
+            WHERE c.teacher_id = ? 
+            AND up.completed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+        
+        const params = [teacherId];
+
+        // Если выбран конкретный класс, добавляем фильтр
+        if (classId && classId !== 'ALL') {
+            sql += ` AND cm.class_id = ?`;
+            params.push(classId);
+        }
+
+        sql += ` GROUP BY dateStr ORDER BY dateStr ASC`;
+
+        const [rows] = await pool.execute(sql, params);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/teacher/remove-student', async (req, res) => {
+    try {
+        const { classId, studentId } = req.body;
+        await pool.execute(
+            'DELETE FROM class_members WHERE class_id = ? AND student_id = ?', 
+            [classId, studentId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. НОВЫЙ МАРШРУТ: ДЕТАЛИ УЧЕНИКА
+app.get('/api/teacher/student-details/:studentId', async (req, res) => {
+    try {
+        const studentId = req.params.studentId;
+
+        // Данные ученика + Стрик
+        const [users] = await pool.execute('SELECT name, email, avatar, streak, created_at FROM users WHERE user_id = ?', [studentId]);
+        if (!users.length) return res.status(404).json({ error: 'User not found' });
+        
+        // Список пройденных уроков (последние 10)
+        const [history] = await pool.execute(`
+            SELECT l.title_ru, DATE_FORMAT(up.completed_at, '%d.%m.%Y %H:%i') as date
+            FROM user_progress up
+            JOIN lessons l ON up.lesson_id = l.lesson_id
+            WHERE up.user_id = ?
+            ORDER BY up.completed_at DESC
+            LIMIT 10
+        `, [studentId]);
+
+        res.json({ user: users[0], history });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Регистрация
@@ -64,6 +182,19 @@ app.post('/api/auth/register', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(400).json({ error: 'Ошибка регистрации или Email занят' });
+    }
+});
+
+app.post('/api/teacher/remove-class', async (req, res) => {
+    try {
+        const { classId } = req.body;
+        // Сначала удаляем связи учеников с классом
+        await pool.execute('DELETE FROM class_members WHERE class_id = ?', [classId]);
+        // Потом удаляем сам класс
+        await pool.execute('DELETE FROM classes WHERE class_id = ?', [classId]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -93,33 +224,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Загрузка аватарки
-app.post('/api/upload-avatar', async (req, res) => {
-    // ВАЖНО: На Vercel нельзя сохранять файлы. Выдаем ошибку.
-    if (process.env.VERCEL) {
-        return res.status(400).json({ error: 'Загрузка файлов отключена на Vercel (Read-only system)' });
-    }
 
-    if (!req.files || !req.files.avatar) {
-        return res.status(400).json({ error: 'Файл не найден' });
-    }
-
-    const userId = req.body.userId;
-    const file = req.files.avatar;
-    const ext = path.extname(file.name);
-    const newName = `user_${userId}_${Date.now()}${ext}`;
-    const uploadPath = path.join(__dirname, '../uploads', newName);
-
-    file.mv(uploadPath, async (err) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send(err);
-        }
-        const url = `/uploads/${newName}`;
-        await pool.execute('UPDATE users SET avatar = ? WHERE user_id = ?', [url, userId]);
-        res.json({ avatarUrl: url });
-    });
-});
 
 // Получить статистику по классам
 app.get('/api/teacher/dashboard/:id', async (req, res) => {
@@ -160,12 +265,85 @@ app.post('/api/teacher/add-student', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ПРОГРЕСС
-app.post('/api/progress', async (req, res) => {
+
+app.get('/api/word-of-day', async (req, res) => {
     try {
-        await pool.execute('INSERT IGNORE INTO user_progress (user_id, lesson_id) VALUES (?, ?)', [req.body.userId, req.body.lessonId]);
+        // 1. Получаем список всех ID слов (это быстрый запрос)
+        const [ids] = await pool.execute('SELECT word_id FROM words');
+        
+        if (ids.length === 0) return res.json(null);
+
+        // 2. Генерируем "зерно" (Seed) на основе текущей даты
+        // Например, 12 февраля 2026 превратится в число 20260212
+        const now = new Date();
+        const seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        // 3. Выбираем индекс слова математически
+        // Остаток от деления зерна на количество слов всегда даст одно и то же число сегодня
+        // Умножаем seed на простое число (напр. 997), чтобы перемешать порядок, иначе слова пойдут просто по алфавиту/ID
+        const index = (seed * 997) % ids.length;
+        const targetId = ids[index].word_id;
+
+        // 4. Достаем это конкретное слово
+        const [rows] = await pool.execute('SELECT * FROM words WHERE word_id = ?', [targetId]);
+        
+        res.json(rows[0] || null);
+
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+// УДАЛЕНИЕ АККАУНТА (С ПРОВЕРКОЙ ПАРОЛЯ)
+app.delete('/api/user', async (req, res) => {
+    const { userId, password } = req.body;
+
+    try {
+        // 1. Проверяем пароль перед удалением
+        const [users] = await pool.execute('SELECT * FROM users WHERE user_id = ?', [userId]);
+        if (!users.length) return res.status(404).json({ error: 'Пользователь не найден' });
+        
+        const user = users[0];
+        if (!verifyPassword(password, user.password_hash)) {
+            return res.status(403).json({ error: 'Неверный пароль!' });
+        }
+
+        // 2. Начинаем чистку данных (порядок важен!)
+        
+        // А) Удаляем прогресс и достижения
+        await pool.execute('DELETE FROM user_progress WHERE user_id = ?', [userId]);
+        await pool.execute('DELETE FROM user_achievements WHERE user_id = ?', [userId]);
+
+        // Б) Если это УЧЕНИК — удаляем его из классов
+        await pool.execute('DELETE FROM class_members WHERE student_id = ?', [userId]);
+
+        // В) Если это УЧИТЕЛЬ — удаляем его классы и всех учеников ИЗ ЭТИХ классов
+        if (user.role === 'teacher') {
+            // Находим ID классов учителя
+            const [classes] = await pool.execute('SELECT class_id FROM classes WHERE teacher_id = ?', [userId]);
+            const classIds = classes.map(c => c.class_id);
+
+            if (classIds.length > 0) {
+                // Удаляем учеников из этих классов (связи)
+                // Используем IN (...) динамически
+                const placeholders = classIds.map(() => '?').join(',');
+                await pool.execute(`DELETE FROM class_members WHERE class_id IN (${placeholders})`, classIds);
+                
+                // Удаляем сами классы
+                await pool.execute('DELETE FROM classes WHERE teacher_id = ?', [userId]);
+            }
+        }
+
+        // 3. Наконец, удаляем самого пользователя
+        await pool.execute('DELETE FROM users WHERE user_id = ?', [userId]);
+
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка при удалении: ' + err.message });
+    }
 });
 
 app.delete('/api/progress', async (req, res) => {
@@ -196,16 +374,30 @@ app.get('/api/lessons', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ПОЛУЧИТЬ УРОК (+ ПРОГРЕСС, ЕСЛИ ЕСТЬ)
 app.get('/api/lessons/:id', async (req, res) => {
     try {
-        // ВАЖНО: lessons вместо Lessons
-        const [lesson] = await pool.execute('SELECT * FROM lessons WHERE lesson_id = ?', [req.params.id]);
+        const lessonId = req.params.id;
+        const userId = req.query.userId; // Получаем ID юзера из запроса
+
+        // 1. Грузим урок
+        const [lesson] = await pool.execute('SELECT * FROM lessons WHERE lesson_id = ?', [lessonId]);
         if (lesson.length === 0) return res.status(404).json({ error: 'Урок не найден' });
 
-        // ВАЖНО: lesson_tasks вместо Lesson_Tasks
-        const [tasks] = await pool.execute('SELECT * FROM lesson_tasks WHERE lesson_id = ?', [req.params.id]);
+        // 2. Грузим задания
+        const [tasks] = await pool.execute('SELECT * FROM lesson_tasks WHERE lesson_id = ?', [lessonId]);
 
-        res.json({ lesson: lesson[0], tasks: tasks });
+        // 3. Грузим прогресс этого ученика (ОЦЕНКУ И ВРЕМЯ)
+        let progress = null;
+        if (userId) {
+            const [progRows] = await pool.execute(
+                'SELECT score, completed_at FROM user_progress WHERE user_id = ? AND lesson_id = ?', 
+                [userId, lessonId]
+            );
+            if (progRows.length > 0) progress = progRows[0];
+        }
+
+        res.json({ lesson: lesson[0], tasks: tasks, progress: progress });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -227,6 +419,131 @@ app.get('/api/quiz-words', async (req, res) => {
         const [rows] = await pool.execute('SELECT * FROM words WHERE lang_code = ? ORDER BY RAND() LIMIT 5', [lang]);
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
+});
+// СОХРАНЕНИЕ ПРОГРЕССА (С ПРОВЕРКОЙ ВРЕМЕНИ И ОЦЕНКИ)
+app.post('/api/progress', async (req, res) => {
+    const { userId, lessonId, score } = req.body;
+    
+    try {
+        // 1. Проверяем, когда ученик проходил этот урок
+        const [existing] = await pool.execute(
+            'SELECT completed_at FROM user_progress WHERE user_id = ? AND lesson_id = ?',
+            [userId, lessonId]
+        );
+
+        // 2. Если проходил, проверяем прошло ли 60 минут
+        if (existing.length > 0) {
+            const lastRun = new Date(existing[0].completed_at);
+            const now = new Date();
+            const diffMins = Math.floor((now - lastRun) / 60000);
+
+            // Если прошло меньше 60 минут — ошибка
+            if (diffMins < 60) {
+                return res.json({ 
+                    success: false, 
+                    error: `Урок уже пройден. Исправить оценку можно через ${60 - diffMins} мин.` 
+                });
+            }
+        }
+
+        // 3. Сохраняем результат
+        await pool.execute(`
+            INSERT INTO user_progress (user_id, lesson_id, score, completed_at) 
+            VALUES (?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE 
+                score = VALUES(score), 
+                completed_at = NOW()
+        `, [userId, lessonId, score || 0]);
+        
+        // 4. Проверяем ачивки
+        const newBadges = await checkAchievements(userId);
+
+        res.json({ success: true, newBadges });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/user/achievements/:id', async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT a.*, ua.earned_at 
+            FROM achievements a
+            JOIN user_achievements ua ON a.ach_id = ua.ach_id
+            WHERE ua.user_id = ?
+            ORDER BY ua.earned_at DESC
+        `, [req.params.id]);
+        res.json(rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/teacher/award', async (req, res) => {
+    const { teacherId, studentId, achievementId } = req.body;
+    try {
+        // Проверка: учитель должен владеть классом этого ученика (упрощено для примера)
+        await pool.execute(
+            'INSERT IGNORE INTO user_achievements (user_id, ach_id) VALUES (?, ?)',
+            [studentId, achievementId]
+        );
+        // Начисляем XP
+        await pool.execute(`
+            UPDATE users u 
+            JOIN achievements a ON a.ach_id = ?
+            SET u.xp_points = u.xp_points + a.xp_reward 
+            WHERE u.user_id = ?
+        `, [achievementId, studentId]);
+
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/user/avatar', async (req, res) => {
+    try {
+        const { userId, avatarUrl } = req.body;
+        await pool.execute('UPDATE users SET avatar = ? WHERE user_id = ?', [avatarUrl, userId]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- 2. МАССОВАЯ РАЗДАЧА (ЗАПУСТИТЬ 1 РАЗ В БРАУЗЕРЕ) ---
+app.get('/api/admin/fix-avatars', async (req, res) => {
+    try {
+        await pool.execute(`
+            UPDATE users 
+            SET avatar = ELT(FLOOR(1 + RAND() * 25),
+                'https://cdn-icons-png.flaticon.com/512/616/616430.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616408.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616440.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616458.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616460.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616492.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616554.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616409.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616569.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616494.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616489.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616566.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616470.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616538.png',
+                'https://cdn-icons-png.flaticon.com/512/616/616515.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922510.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922561.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922522.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922579.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922506.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922566.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922656.png',
+                'https://cdn-icons-png.flaticon.com/512/2922/2922608.png',
+                'https://cdn-icons-png.flaticon.com/512/4322/4322991.png',
+                'https://cdn-icons-png.flaticon.com/512/4712/4712109.png'
+            )
+            WHERE avatar IS NULL OR avatar = ''
+        `);
+        res.send('✅ Аватарки выданы!');
+    } catch (e) { res.status(500).send('Ошибка: ' + e.message); }
 });
 
 module.exports = app;
