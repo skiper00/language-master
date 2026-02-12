@@ -600,15 +600,52 @@ const app = {
     },
 
     async addStudent(classId) {
-        const studentId = document.getElementById(`add-st-${classId}`).value;
-        if (!studentId) return;
-        const res = await fetch(`${API}/teacher/add-student`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ classId, studentId })
-        });
-        const data = await res.json();
-        if (data.error) alert(data.error);
-        else this.tab('dashboard');
+         // 1. Находим поле ввода
+        const input = document.getElementById(`add-st-${classId}`);
+        
+        // 2. Превращаем строку в число (Важно!)
+        const studentId = parseInt(input.value);
+
+        if (!studentId) {
+            alert("Пожалуйста, введите корректный ID ученика (число).");
+            return;
+        }
+
+        const btn = document.querySelector(`#card-class-${classId} .add-student-form button`);
+        const oldIcon = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Показываем загрузку
+
+        try {
+            const res = await fetch(`${API}/teacher/add-student`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // Отправляем studentId именно как число
+                body: JSON.stringify({ classId, studentId }) 
+            });
+
+            // 3. Проверяем, не вернул ли сервер ошибку (HTML вместо JSON)
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("Сервер вернул ошибку (не JSON). Проверьте логи Vercel.");
+            }
+
+            const data = await res.json();
+
+            if (data.error) {
+                alert("Ошибка: " + data.error);
+            } else {
+                // Успех! Обновляем дашборд
+                this.tab('dashboard');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Не удалось добавить ученика. Проверьте консоль браузера (F12).');
+        } finally {
+            // Возвращаем кнопку в исходное состояние
+            btn.disabled = false;
+            btn.innerHTML = oldIcon;
+        }
     },
 
     async removeStudent(classId, studentId, btnElement) {
