@@ -255,14 +255,50 @@ app.post('/api/teacher/classes', async (req, res) => {
 });
 
 // Добавить ученика
+// === БРОНЕБОЙНЫЙ МАРШРУТ ADD-STUDENT ===
 app.post('/api/teacher/add-student', async (req, res) => {
-    try {
-        const [st] = await pool.execute('SELECT * FROM users WHERE user_id = ? AND role = "student"', [req.body.studentId]);
-        if (!st.length) return res.status(404).json({ error: 'Ученик с таким ID не найден' });
+    // 1. ЛОГИРОВАНИЕ: Смотрим в Logs Vercel, что реально пришло
+    console.log('➡️ [API] Add Student Request:', req.body);
 
-        await pool.execute('INSERT IGNORE INTO class_members (class_id, student_id) VALUES (?, ?)', [req.body.classId, req.body.studentId]);
+    try {
+        // 2. ЖЕСТКАЯ КОНВЕРТАЦИЯ: Защита от undefined и строк
+        // Если придет null/undefined, станет NaN, и мы это поймаем
+        const classId = parseInt(req.body.classId, 10);
+        const studentId = parseInt(req.body.studentId, 10);
+
+        // Проверка на валидность чисел
+        if (isNaN(classId) || isNaN(studentId)) {
+            console.error('❌ [API] Ошибка данных: ID не являются числами', { classId, studentId });
+            return res.status(400).json({ error: 'Некорректные данные: ID должны быть числами!' });
+        }
+
+        // 3. ПРОВЕРКА УЧЕНИКА
+        const [st] = await pool.execute(
+            'SELECT user_id FROM users WHERE user_id = ? AND role = "student"', 
+            [studentId]
+        );
+        
+        if (!st.length) {
+            console.error(`❌ [API] Ученик ${studentId} не найден`);
+            return res.status(404).json({ error: 'Ученик не найден в базе данных' });
+        }
+
+        // 4. ДОБАВЛЕНИЕ (Используем явные имена колонок)
+        // INSERT IGNORE спасет, если ученик уже добавлен
+        const [result] = await pool.execute(
+            'INSERT IGNORE INTO class_members (class_id, student_id) VALUES (?, ?)', 
+            [classId, studentId]
+        );
+
+        console.log('✅ [API] Успешно добавлено/обновлено:', result);
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+
+    } catch (err) {
+        // 5. ВОЗВРАТ РЕАЛЬНОЙ ОШИБКИ
+        // Это покажет тебе в alert() точный текст проблемы (например "Table doesn't exist")
+        console.error('🔥 [API] CRITICAL DB ERROR:', err);
+        res.status(500).json({ error: 'DB Error: ' + err.message });
+    }
 });
 
 
