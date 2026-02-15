@@ -24,7 +24,7 @@ body {
     display: flex;
     background: var(--bg); 
     color: var(--text);
-    overflow: hidden; /* Скролл внутри контейнеров */
+    overflow: hidden; 
 }
 
 /* ========================================= */
@@ -42,7 +42,7 @@ body {
     z-index: 10;
     flex-shrink: 0;
     position: fixed; left: 0; top: 0;
-    transition: 0.3s ease; /* Плавность для мобильного меню */
+    transition: left 0.3s ease;
 }
 
 /* ========================================= */
@@ -56,7 +56,6 @@ body {
     padding: 40px; 
     position: relative;
     background: var(--bg);
-    transition: 0.3s ease;
 }
 
 #content-area { 
@@ -83,8 +82,6 @@ body {
     .welcome-box { padding: 25px; }
 }
 
-/* ЗАМЕТКА: Все мобильные стили (< 768px) теперь в самом низу файла */
-
 /* ========================================= */
 /* 5. ЭКРАНЫ (ЗАСТАВКА, ВХОД)                */
 /* ========================================= */
@@ -110,11 +107,8 @@ body {
 /* ========================================= */
 /* 6. СТИЛИ ИНТЕРФЕЙСА                       */
 /* ========================================= */
-
-/* Логотип */
 .logo { font-size: 1.5rem; font-weight: bold; margin-bottom: 30px; color: var(--primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-/* Профиль */
 .user-profile-mini {
     display: flex; align-items: center; gap: 12px; padding: 12px;
     background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
@@ -131,7 +125,6 @@ body {
 #user-name-display { display: block; font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 #user-id-display { font-size: 11px; opacity: 0.6; }
 
-/* Навигация */
 .nav-buttons { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
 .nav-btn { 
     background: transparent; color: #bdc3c7; border: none; padding: 12px 15px;
@@ -142,7 +135,6 @@ body {
 .nav-btn.active { background: var(--primary); color: white; font-weight: 600; box-shadow: 0 4px 10px rgba(26, 188, 156, 0.2); }
 .nav-btn i { width: 20px; text-align: center; }
 
-/* Низ сайдбара */
 .language-switch { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
 #lang-switch { width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.2); color: #bdc3c7; border: 1px solid #34495e; border-radius: 6px; cursor: pointer; }
 .logout-btn { margin-top: 10px; } .logout-btn:hover { background: rgba(231, 76, 60, 0.2) !important; color: #e74c3c !important; }
@@ -167,7 +159,6 @@ body {
 /* ========================================= */
 /* 7. КОНТЕНТ (УРОКИ, ИГРЫ)                  */
 /* ========================================= */
-
 .welcome-box { background: linear-gradient(135deg, var(--dark), #34495e); color: white; padding: 40px; border-radius: 20px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(44, 62, 80, 0.2); }
 .stats-grid { display: flex; gap: 20px; margin-bottom: 30px; }
 .stat-box { flex: 1; background: white; padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -175,45 +166,24 @@ body {
 .stat-icon.fire { color: #e74c3c; background: #fdeaea; }
 .stat-icon.trophy { color: #f1c40f; background: #fcf8e3; }
 .stat-icon.bolt { color: #3498db; background: #eaf2f8; }
-
 .stat-box.level-done { border: 2px solid #2ecc71; background: rgba(46, 204, 113, 0.05); }
 .stat-box.level-done h2 { color: #27ae60; }
 
-/* УВЕЛИЧЕННЫЕ КНОПКИ */
 #levels-nav { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
-.lvl-tab { 
-    padding: 12px 25px; 
-    font-size: 1.1em; 
-    border: 2px solid var(--primary); 
-    background: transparent; color: var(--dark); font-weight: bold; 
-    border-radius: 30px; cursor: pointer; transition: 0.2s;
-}
+.lvl-tab { padding: 12px 25px; font-size: 1.1em; border: 2px solid var(--primary); background: transparent; color: var(--dark); font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s; }
 .lvl-tab:hover { background: #eafaf1; transform: translateY(-2px); }
 .lvl-tab.active { background: var(--primary); color: white; }
 
-.lesson-card { 
-    background: white; padding: 20px; border-radius: 12px; 
-    margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-    cursor: pointer; transition: 0.2s; border-left: 5px solid transparent;
-}
+.lesson-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; border-left: 5px solid transparent; }
 .lesson-card:hover { transform: translateX(5px); border-color: var(--primary); }
 .lesson-card.done { border-left-color: var(--success); background: #f9fff9; }
 
-.back-btn { 
-    background: #e0e0e0; border: none; 
-    padding: 10px 25px; 
-    border-radius: 25px; cursor: pointer; 
-    font-weight: bold; margin-bottom: 20px; 
-    font-size: 15px; 
-    transition: 0.2s;
-}
+.back-btn { background: #e0e0e0; border: none; padding: 10px 25px; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 20px; font-size: 15px; transition: 0.2s; }
 .back-btn:hover { background: #d0d0d0; transform: translateX(-3px); }
 
 .lesson-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-
 .theory-box { background: white; padding: 30px; border-radius: 15px; line-height: 1.6; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: 100%; }
 
-/* Задания */
 .task-card { background: white; padding: 25px; margin: 20px 0; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border-left: 5px solid var(--primary); width: 100%; }
 .task-option { display: flex; align-items: center; gap: 10px; padding: 12px; margin: 8px 0; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; }
 .task-option:hover { border-color: var(--primary); background: #eafaf1; }
@@ -224,7 +194,6 @@ body {
 .task-card .task-input { flex: 1; min-width: 200px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; }
 .task-card .input-group .primary-btn { width: auto; min-width: 80px; padding: 12px 25px; margin: 0; flex-shrink: 0; }
 
-/* Словарь */
 .dict-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .search-box, .dict-filter { padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
 .search-box { flex: 1; min-width: 200px; }
@@ -232,7 +201,6 @@ body {
 .word-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 3px solid var(--primary); }
 .word-card b { color: var(--primary); font-size: 1.2em; display: block; margin-bottom: 5px; }
 
-/* Панель учителя */
 .class-card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .class-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; flex-wrap: wrap; }
 .student-row { display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: 8px; transition: 0.2s; }
@@ -246,7 +214,6 @@ body {
 .delete-btn:hover { background: #fdeaea; transform: scale(1.1); }
 .class-select { padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; background: white; font-weight: bold; color: #2c3e50; cursor: pointer; outline: none; }
 
-/* Игры */
 .modes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
 .mode-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; border: 2px solid transparent; text-align: center; }
 .mode-card:hover { transform: translateY(-5px); border-color: var(--primary); }
@@ -255,7 +222,6 @@ body {
 .game-container { width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: none; }
 .game-header { display: flex; justify-content: space-between; margin-bottom: 30px; color: #95a5a6; font-weight: bold; align-items: center; flex-wrap: wrap; }
 
-/* Игровые компоненты */
 .quiz-word { font-size: 3em; color: var(--dark); margin-bottom: 40px; font-weight: 800; text-align: center; }
 .quiz-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
 .quiz-btn { background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 12px; font-size: 1.1em; cursor: pointer; transition: 0.2s; font-weight: 500; }
@@ -341,7 +307,7 @@ body {
 .cert-badge:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #27ae60; }
 
 /* --- МОДАЛЬНОЕ ОКНО УЧЕНИКА / АВАТАР --- */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 3000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
 .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
 .student-modal { background: white; width: 90%; max-width: 500px; border-radius: 20px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); position: relative; }
 .close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #999; }
@@ -458,12 +424,17 @@ body {
 
     /* 6. ФИКСЫ ИНТЕРФЕЙСА ДЛЯ ТЕЛЕФОНОВ */
     
-    /* Таблицы (чтобы можно было скроллить пальцем) */
+    /* Таблицы - уменьшаем отступы и заставляем скроллиться */
+    .theory-box {
+        padding: 15px !important; /* Больше места для контента */
+    }
+
     .theory-box table {
         display: block;
         width: 100%;
         overflow-x: auto;
         white-space: nowrap;
+        border-collapse: collapse;
     }
 
     /* Карточки на всю ширину */
