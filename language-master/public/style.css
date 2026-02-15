@@ -24,11 +24,11 @@ body {
     display: flex;
     background: var(--bg); 
     color: var(--text);
-    overflow: hidden;
+    overflow: hidden; /* Скролл внутри контейнеров */
 }
 
 /* ========================================= */
-/* 2. БОКОВАЯ ПАНЕЛЬ (SIDEBAR)               */
+/* 2. БОКОВАЯ ПАНЕЛЬ (SIDEBAR - Desktop)     */
 /* ========================================= */
 .sidebar { 
     width: 280px;
@@ -42,27 +42,26 @@ body {
     z-index: 10;
     flex-shrink: 0;
     position: fixed; left: 0; top: 0;
+    transition: 0.3s ease; /* Плавность для мобильного меню */
 }
 
 /* ========================================= */
-/* 3. ОСНОВНАЯ ОБЛАСТЬ КОНТЕНТА (ИСПРАВЛЕНО) */
+/* 3. ОСНОВНАЯ ОБЛАСТЬ КОНТЕНТА (Desktop)    */
 /* ========================================= */
 .main-content { 
     margin-left: 280px;
     width: calc(100% - 280px);
     height: 100vh;
     overflow-y: auto;
-    /* УВЕЛИЧИЛИ отступы, чтобы было просторно */
     padding: 40px; 
     position: relative;
     background: var(--bg);
+    transition: 0.3s ease;
 }
 
 #content-area { 
     width: 100%;
-    /* ОГРАНИЧИВАЕМ ширину, чтобы не растягивало на весь монитор */
     max-width: 1100px; 
-    /* Центрируем контент */
     margin: 0 auto; 
     padding-bottom: 60px;
 }
@@ -72,7 +71,7 @@ body {
 }
 
 /* ========================================= */
-/* 4. МЕДИАЗАПРОСЫ (АДАПТИВНОСТЬ)            */
+/* 4. АДАПТИВНОСТЬ (Планшеты/Десктоп)        */
 /* ========================================= */
 @media (max-width: 1200px) {
     .main-content { padding: 30px; }
@@ -84,21 +83,7 @@ body {
     .welcome-box { padding: 25px; }
 }
 
-@media (max-width: 768px) {
-    .sidebar { width: 70px; padding: 15px 10px; }
-    .sidebar .logo span, .user-info, .nav-btn span, .language-switch label, #user-id-display { display: none; }
-    .logo { justify-content: center; }
-    .user-profile-mini { justify-content: center; padding: 10px; }
-    .nav-btn { justify-content: center; padding: 12px; }
-    .nav-btn i { width: auto; font-size: 20px; }
-    .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 15px; }
-}
-
-@media (max-width: 576px) {
-    .main-content { padding: 10px; }
-    #content-area { padding-bottom: 30px; }
-    .stat-box { min-width: 100%; } /* На мобилках статы в колонку */
-}
+/* ЗАМЕТКА: Все мобильные стили (< 768px) теперь в самом низу файла */
 
 /* ========================================= */
 /* 5. ЭКРАНЫ (ЗАСТАВКА, ВХОД)                */
@@ -191,11 +176,14 @@ body {
 .stat-icon.trophy { color: #f1c40f; background: #fcf8e3; }
 .stat-icon.bolt { color: #3498db; background: #eaf2f8; }
 
-/* --- УВЕЛИЧЕННЫЕ КНОПКИ (A1, A2...) --- */
+.stat-box.level-done { border: 2px solid #2ecc71; background: rgba(46, 204, 113, 0.05); }
+.stat-box.level-done h2 { color: #27ae60; }
+
+/* УВЕЛИЧЕННЫЕ КНОПКИ */
 #levels-nav { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
 .lvl-tab { 
-    padding: 12px 25px;       /* <-- СДЕЛАЛИ БОЛЬШЕ */
-    font-size: 1.1em;         /* <-- ШРИФТ КРУПНЕЕ */
+    padding: 12px 25px; 
+    font-size: 1.1em; 
     border: 2px solid var(--primary); 
     background: transparent; color: var(--dark); font-weight: bold; 
     border-radius: 30px; cursor: pointer; transition: 0.2s;
@@ -211,25 +199,17 @@ body {
 .lesson-card:hover { transform: translateX(5px); border-color: var(--primary); }
 .lesson-card.done { border-left-color: var(--success); background: #f9fff9; }
 
-/* --- УВЕЛИЧЕННАЯ КНОПКА НАЗАД --- */
 .back-btn { 
     background: #e0e0e0; border: none; 
-    padding: 10px 25px;       /* <-- СДЕЛАЛИ БОЛЬШЕ */
+    padding: 10px 25px; 
     border-radius: 25px; cursor: pointer; 
     font-weight: bold; margin-bottom: 20px; 
-    font-size: 15px;          /* <-- ШРИФТ КРУПНЕЕ */
+    font-size: 15px; 
     transition: 0.2s;
 }
 .back-btn:hover { background: #d0d0d0; transform: translateX(-3px); }
 
 .lesson-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-
-.status-toggle {
-    background: white; border: 2px solid #bdc3c7; color: #7f8c8d;
-    padding: 8px 20px; border-radius: 20px; cursor: pointer;
-    font-weight: bold; transition: 0.3s;
-}
-.status-toggle.done { border-color: var(--success); background: #eafaf1; color: var(--success); }
 
 .theory-box { background: white; padding: 30px; border-radius: 15px; line-height: 1.6; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: 100%; }
 
@@ -262,6 +242,9 @@ body {
 .create-class-box input { flex: 1; min-width: 200px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; }
 .add-student-form { display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; flex-wrap: wrap; }
 .add-student-form input { padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+.delete-btn { background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem; padding: 8px; border-radius: 5px; transition: 0.2s; margin-left: auto; }
+.delete-btn:hover { background: #fdeaea; transform: scale(1.1); }
+.class-select { padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; background: white; font-weight: bold; color: #2c3e50; cursor: pointer; outline: none; }
 
 /* Игры */
 .modes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
@@ -315,628 +298,213 @@ body {
 .confetti { position: fixed; width: 10px; height: 10px; top: -10px; animation: fall linear forwards; z-index: 9999; }
 @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
 
-
-/* Прогресс бар сверху */
-.sticky-header {
-    position: sticky; top: 0; background: white; z-index: 100;
-    padding: 10px; border-bottom: 1px solid #eee;
-    display: flex; align-items: center; gap: 10px;
-}
-.progress-bar {
-    flex-grow: 1; height: 10px; background: #eee; border-radius: 5px; overflow: hidden;
-}
-.fill { height: 100%; background: #2ecc71; transition: width 0.5s; }
-
-/* Карточки заданий */
-.task-card {
-    background: white; padding: 15px; margin-bottom: 15px;
-    border-radius: 8px; border: 1px solid #ddd;
-    transition: all 0.3s;
-}
-.opts label {
-    display: block; padding: 8px; cursor: pointer;
-    border-radius: 5px; margin-bottom: 5px;
-}
-.opts label:hover { background: #f0f0f0; }
-.task-input {
-    width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;
-}
-.feedback { margin-top: 10px; font-weight: bold; }
-
 /* === ANALYTICS DASHBOARD === */
-.analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: -20px;
-}
-
-.stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border: 1px solid #eee;
-}
-
-.stat-card h3 {
-    margin-top: 0;
-    font-size: 16px;
-    color: #2c3e50;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
+.analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: -20px; }
 .wide { grid-column: span 2; }
 @media (max-width: 900px) { .wide { grid-column: span 1; } }
 
-/* Pie Chart (Круговая диаграмма на CSS) */
 .chart-container { display: flex; align-items: center; gap: 20px; }
-.pie-chart {
-    width: 100px; height: 100px;
-    border-radius: 50%;
-    background: #eee; /* Fallback */
-    /* Градиент задается через JS */
-}
-.chart-legend div {
-    display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 5px;
-}
+.pie-chart { width: 100px; height: 100px; border-radius: 50%; background: #eee; }
+.chart-legend div { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 5px; }
 .chart-legend span { width: 10px; height: 10px; border-radius: 50%; display: block; }
 
-/* Bar Chart (Столбчатая диаграмма) */
-.bar-chart-wrap { height: 150px; display: flex; flex-direction: column; }
-.bar-chart {
-    flex-grow: 1;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #ddd;
-}
-.bar {
-    width: 10%;
-    background: #3498db;
-    border-radius: 4px 4px 0 0;
-    transition: height 1s ease;
-    opacity: 0.8;
-}
+.bar-chart-wrap { height: 200px; display: flex; flex-direction: column; margin-top: 10px; }
+.bar-chart { flex-grow: 1; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px solid #ddd; }
+.bar { width: 10%; background: #3498db; border-radius: 4px 4px 0 0; transition: height 1s ease; opacity: 0.8; }
 .bar:hover { opacity: 1; transform: scaleY(1.05); }
-.chart-axis {
-    display: flex; justify-content: space-between;
-    font-size: 10px; color: #95a5a6; margin-top: 5px;
-}
+.chart-axis { display: flex; justify-content: space-between; font-size: 10px; color: #95a5a6; margin-top: 5px; }
 
-/* Списки учеников */
-.risk-list { display: flex; flex-direction: column; gap: 10px; }
-.risk-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px; border-radius: 8px;
-    background: #f8f9fa;
-}
-.avatar-circle {
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-weight: bold; font-size: 12px;
-}
-.avatar-circle.red { background: #e74c3c; }
-.avatar-circle.green { background: #2ecc71; }
-
-/* --- НОВЫЕ СТИЛИ ДЛЯ 3-Х КОЛОНОК --- */
-.lists-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.list-card {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    border-top: 4px solid #ddd;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
+.lists-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+.list-card { background: white; padding: 15px; border-radius: 12px; border-top: 4px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .list-card.red { border-top-color: #e74c3c; }
 .list-card.yellow { border-top-color: #f1c40f; }
 .list-card.green { border-top-color: #2ecc71; }
+.list-card h3 { margin: 0 0 15px 0; font-size: 15px; display: flex; justify-content: space-between; }
+.risk-list { display: flex; flex-direction: column; gap: 10px; }
+.risk-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f8f9fa; }
+.avatar-circle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; }
+.avatar-circle.red { background: #e74c3c; }
+.avatar-circle.green { background: #2ecc71; }
 
-.list-card h3 {
-    margin: 0 0 15px 0;
-    font-size: 15px;
-    display: flex; justify-content: space-between;
-}
+/* --- ДОПОЛНИТЕЛЬНЫЕ КАРТОЧКИ --- */
+.dashboard-extras { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+.extra-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.card-header-icon { font-size: 14px; text-transform: uppercase; color: #95a5a6; font-weight: bold; margin-bottom: 15px; width: 100%; text-align: left; }
+.word-day-card { background: linear-gradient(135deg, #fff, #fdfbf7); border-bottom: 4px solid #f1c40f; }
+.wd-word { font-size: 2.5rem; font-weight: 800; color: #2c3e50; margin-bottom: 5px; }
+.wd-trans { font-size: 1.2rem; color: #7f8c8d; margin-bottom: 15px; }
+.wd-speak-btn { background: #ecf0f1; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; color: #2c3e50; transition: 0.2s; }
+.wd-speak-btn:hover { background: #dcdde1; }
+.certs-card { border-bottom: 4px solid #2ecc71; }
+.certs-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; }
+.cert-badge { display: flex; align-items: center; gap: 8px; background: #eafaf1; color: #27ae60; padding: 10px 20px; border-radius: 30px; font-weight: bold; font-size: 1.2rem; border: 2px solid #2ecc71; box-shadow: 0 4px 0 #2ecc71; transition: 0.2s; }
+.cert-badge:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #27ae60; }
 
-/* Исправление высоты графика */
-.bar-chart-wrap {
-    height: 200px; /* Чуть выше */
-    margin-top: 10px;
-}
-
-
-/* --- МОДАЛЬНОЕ ОКНО УЧЕНИКА --- */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5); z-index: 1000;
-    display: none; justify-content: center; align-items: center;
-    backdrop-filter: blur(5px);
-}
+/* --- МОДАЛЬНОЕ ОКНО УЧЕНИКА / АВАТАР --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
 .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
-
-.student-modal {
-    background: white; width: 90%; max-width: 500px;
-    border-radius: 20px; padding: 30px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-    position: relative;
-}
-
-.modal-header { text-align: center; margin-bottom: 20px; }
-.modal-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 10px; }
-.modal-stats { display: flex; justify-content: space-around; background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-.ms-item { text-align: center; }
-.ms-val { font-size: 20px; font-weight: bold; color: var(--dark); }
-.ms-lbl { font-size: 12px; color: #7f8c8d; }
-
-.history-list { max-height: 200px; overflow-y: auto; }
-.history-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-.history-item:last-child { border: none; }
+.student-modal { background: white; width: 90%; max-width: 500px; border-radius: 20px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); position: relative; }
 .close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #999; }
-
-/* Стили для селектора классов */
-.class-select {
-    padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd;
-    background: white; font-weight: bold; color: #2c3e50; cursor: pointer; outline: none;
-}
-
-/* Кнопка удаления ученика */
-.delete-btn {
-    background: transparent;
-    border: none;
-    color: #e74c3c;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 8px;
-    border-radius: 5px;
-    transition: 0.2s;
-    margin-left: auto; /* Прижимает кнопку вправо */
-}
-.delete-btn:hover {
-    background: #fdeaea;
-    transform: scale(1.1);
-}
-
-/* --- СЕТКА АВАТАРОК --- */
-.avatar-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-    gap: 15px;
-    padding: 10px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.avatar-option {
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 3px solid transparent;
-    transition: 0.2s;
-    background: #f8f9fa;
-    padding: 5px;
-}
-
-.avatar-option:hover {
-    transform: scale(1.1);
-    border-color: var(--primary);
-    background: #eafaf1;
-}
-
-.edit-avatar-btn {
-    position: absolute; bottom: -5px; right: -5px; width: 24px; height: 24px;
-    background: var(--primary); color: white; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 10px;
-    border: 2px solid white;
-}
-
-
-/* --- СТИЛИ ДЛЯ ЧЕСТНОГО РЕЖИМА --- */
-
-/* Когда задание решено - блокируем его */
-.task-card.locked {
-    opacity: 0.8;
-    pointer-events: none; /* Запрещает клики */
-}
-
-/* Выбранный ответ (нейтральный цвет, пока не узнаем результат) */
-.task-option.selected {
-    background: #e3f2fd;
-    border-color: #3498db;
-    color: #2c3e50;
-    font-weight: bold;
-}
-
-/* Скрываем галочки радио-кнопок, делаем кастомные */
-.task-option input[type="radio"] {
-    accent-color: #3498db;
-}
-
-/* --- ПЛАВНАЯ ШКАЛА РЕЗУЛЬТАТА --- */
-.result-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    z-index: 2000;
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    animation: fadeIn 0.5s;
-}
-
-.result-box {
-    width: 90%; max-width: 400px;
-    text-align: center;
-}
-
-.result-scale-bg {
-    width: 100%; height: 20px;
-    background: #ecf0f1;
-    border-radius: 10px;
-    margin: 20px 0;
-    overflow: hidden;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.result-scale-fill {
-    height: 100%;
-    width: 0%; /* Начинаем с 0 */
-    background: linear-gradient(90deg, #f1c40f, #2ecc71);
-    border-radius: 10px;
-    transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1); /* Плавная анимация */
-}
-
-.result-text {
-    font-size: 24px; font-weight: 800; color: #2c3e50;
-    margin-bottom: 10px;
-}
-
+.avatar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 15px; padding: 10px; max-height: 400px; overflow-y: auto; }
+.avatar-option { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; background: #f8f9fa; padding: 5px; }
+.avatar-option:hover { transform: scale(1.1); border-color: var(--primary); background: #eafaf1; }
 
 /* --- ПАНЕЛЬ РЕЗУЛЬТАТОВ (ВНИЗУ УРОКА) --- */
-.lesson-footer {
-    margin-top: 40px;
-    padding: 20px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
-    border: 1px solid #eee;
-    display: none; /* Скрыто по умолчанию */
-    animation: slideUp 0.5s ease-out;
-}
-
+.lesson-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); border: 1px solid #eee; display: none; animation: slideUp 0.5s ease-out; }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-.result-info {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
-}
+.result-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .result-score { font-size: 1.5em; font-weight: 800; color: #2c3e50; }
 .result-timer { font-size: 1em; color: #e74c3c; font-weight: bold; background: #fdeaea; padding: 5px 10px; border-radius: 8px; display: none; }
-
-.scale-bg {
-    width: 100%; height: 12px; background: #ecf0f1; border-radius: 6px; overflow: hidden;
-}
-.scale-fill {
-    height: 100%; width: 0%; 
-    background: linear-gradient(90deg, #f1c40f, #2ecc71);
-    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
+.scale-bg { width: 100%; height: 12px; background: #ecf0f1; border-radius: 6px; overflow: hidden; }
+.scale-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #f1c40f, #2ecc71); transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
 
 /* Блокировка решенных заданий */
 .task-card.locked { opacity: 0.7; pointer-events: none; }
 .task-option.selected { background: #d6eaf8; border-color: #3498db; font-weight: bold; }
-/* Показываем правильность ТОЛЬКО В КОНЦЕ (через класс checked) */
-.task-card.checked .task-option.selected.correct { background: #d4edda; border-color: #2ecc71; }
-.task-card.checked .task-option.selected.wrong { background: #f8d7da; border-color: #e74c3c; }
+.task-option input[type="radio"] { accent-color: #3498db; }
 
 /* ========================================= */
-/* --- ИСПРАВЛЕНИЯ МОБИЛЬНОЙ ВЕРСИИ --- */
+/* 8. МОБИЛЬНАЯ АДАПТАЦИЯ (БУРГЕР-МЕНЮ)      */
+/* ЕДИНСТВЕННЫЙ ИСТОЧНИК ПРАВДЫ              */
 /* ========================================= */
 
-/* 1. Улучшаем поля ввода (чтобы кнопка OK не улетала) */
-.task-card .input-group {
-    display: flex;
-    flex-wrap: wrap; /* Разрешаем перенос на новую строку */
-    gap: 10px;       /* Отступ между полем и кнопкой */
-    width: 100%;
+/* Кнопка бургера скрыта на ПК */
+#burger-btn {
+    display: none;
 }
 
-.task-card .task-input {
-    flex-grow: 1;    /* Поле занимает все доступное место */
-    min-width: 200px; /* Минимальная ширина, чтобы не схлопывалось */
-    width: auto;     /* Сброс жесткой ширины */
-}
+@media screen and (max-width: 768px) {
 
-/* 2. Адаптация для телефонов (экраны меньше 576px) */
-@media (max-width: 576px) {
-    /* Сайдбар становится еще компактнее */
-    .sidebar {
-        width: 60px;
-        padding: 10px 5px;
+    /* 1. Глобальный сброс для мобилок */
+    body {
+        overflow-x: hidden; /* Запрещаем горизонтальный скролл страницы */
+    }
+
+    /* 2. Контейнер */
+    #app-container {
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    /* 3. КНОПКА БУРГЕРА (Видна только здесь) */
+    #burger-btn {
+        display: flex; /* Показываем кнопку */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        width: 45px;
+        height: 45px;
+        z-index: 2000; /* Поверх всего */
+        background: #2c3e50;
+        color: white;
+        border: 2px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: 0.2s;
     }
     
-    /* Основной контент сдвигаем и даем отступы */
-    .main-content {
-        margin-left: 60px;
-        width: calc(100% - 60px);
-        padding: 15px;
+    #burger-btn:active {
+        transform: scale(0.95);
     }
 
-    /* Профиль в сайдбаре: скрываем лишнее, центрируем */
-    .user-profile-mini {
-        padding: 5px;
-        justify-content: center;
-        border: none;
-        background: transparent;
+    /* 4. САЙДБАР (Шторка) */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%; /* Спрятан слева за экраном */
+        width: 280px; /* Ширина шторки */
+        height: 100vh;
+        background: #2c3e50;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Плавный выезд */
+        z-index: 1500;
+        padding-top: 80px; /* Отступ сверху, чтобы контент не наезжал на крестик */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
     }
+
+    /* Класс active добавляется JS-ом, когда меню открыто */
+    .sidebar.active {
+        left: 0; /* Выезжает на экран */
+    }
+
+    /* Возвращаем элементы, которые могли быть скрыты в старых стилях */
+    .sidebar .logo span, 
     .user-info, 
     .nav-btn span, 
-    .logout-btn span {
-        display: none !important; /* Точно скрываем текст */
+    .language-switch label, 
+    #user-id-display {
+        display: inline-block !important; /* Показываем текст в меню */
     }
     
-    /* Кнопки меню по центру */
-    .nav-btn {
-        justify-content: center;
-        padding: 10px;
-    }
-    .nav-btn i {
-        margin: 0;
-        font-size: 1.4rem;
+    .logo {
+        display: flex; /* Возвращаем логотип */
+        justify-content: flex-start;
+        padding-left: 10px;
     }
 
-    /* === ИСПРАВЛЕНИЕ ЗАДАНИЙ НА ТЕЛЕФОНЕ === */
+    /* 5. ОСНОВНОЙ КОНТЕНТ */
+    .main-content {
+        margin-left: 0 !important; /* Убираем отступ слева */
+        width: 100% !important;    /* На всю ширину */
+        height: 100vh;
+        padding: 80px 15px 30px 15px; /* Отступ сверху 80px под кнопку */
+        overflow-y: auto;
+    }
+
+    /* 6. ФИКСЫ ИНТЕРФЕЙСА ДЛЯ ТЕЛЕФОНОВ */
     
-    /* Поле ввода и кнопка становятся друг под другом */
+    /* Таблицы (чтобы можно было скроллить пальцем) */
+    .theory-box table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* Карточки на всю ширину */
+    .welcome-box, .stat-card, .task-card, .class-card, .list-card, .extra-card {
+        width: 100% !important;
+        margin-left: 0;
+        margin-right: 0;
+        box-sizing: border-box;
+    }
+
+    /* Статистика и списки в столбик */
+    .stats-grid, .analytics-grid, .lists-grid, .dashboard-extras, .class-header {
+        flex-direction: column;
+    }
+    
+    /* Поля ввода и кнопки в заданиях */
+    .task-card .input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
     .task-card .task-input {
-        width: 100%;      /* На всю ширину */
-        min-width: 100%;
+        width: 100%;
+        min-width: 0;
     }
-    
+
     .task-card .input-group button.primary-btn {
-        width: 100%;      /* Кнопка тоже на всю ширину */
-        margin: 0 !important; /* Убираем левый отступ */
-    }
-
-    /* Уменьшаем шрифты в заголовках */
-    .lesson-header h1 {
-        font-size: 1.5rem;
-    }
-    
-    /* Карточка задания компактнее */
-    .task-card {
-        padding: 15px;
-    }
-    
-    /* Статистика в столбик */
-    .stats-grid {
-        flex-direction: column;
-    }
-    
-    /* Модальное окно результата */
-    .result-modal {
-        width: 90%;
-        padding: 20px;
-    }
-}
-
-/* 3. Фикс кнопки "Выйти" внизу сайдбара */
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Растягиваем контент */
-}
-
-/* Нижняя часть сайдбара всегда внизу */
-.sidebar-footer {
-    margin-top: auto;
-    padding-top: 10px;
-}
-
-.stat-box.level-done {
-    border: 2px solid #2ecc71;
-    background: rgba(46, 204, 113, 0.05);
-}
-
-.stat-box.level-done h2 {
-    color: #27ae60;
-}
-
-/* --- НОВЫЕ БЛОКИ НА ГЛАВНОЙ --- */
-
-.dashboard-extras {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.extra-card {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-    border: 1px solid #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.card-header-icon {
-    font-size: 14px;
-    text-transform: uppercase;
-    color: #95a5a6;
-    font-weight: bold;
-    margin-bottom: 15px;
-    width: 100%;
-    text-align: left;
-}
-
-/* Карточка Слова Дня */
-.word-day-card {
-    background: linear-gradient(135deg, #fff, #fdfbf7);
-    border-bottom: 4px solid #f1c40f;
-}
-
-.wd-word {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #2c3e50;
-    margin-bottom: 5px;
-}
-
-.wd-trans {
-    font-size: 1.2rem;
-    color: #7f8c8d;
-    margin-bottom: 15px;
-}
-
-.wd-speak-btn {
-    background: #ecf0f1;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: bold;
-    color: #2c3e50;
-    transition: 0.2s;
-}
-.wd-speak-btn:hover { background: #dcdde1; }
-
-/* Карточка Достижений */
-.certs-card {
-    border-bottom: 4px solid #2ecc71;
-}
-
-.certs-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    width: 100%;
-}
-
-.cert-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #eafaf1;
-    color: #27ae60;
-    padding: 10px 20px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 1.2rem;
-    border: 2px solid #2ecc71;
-    box-shadow: 0 4px 0 #2ecc71;
-    transition: 0.2s;
-}
-
-.cert-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 #27ae60;
-}
-
-/* Адаптив для мобильных */
-@media (max-width: 768px) {
-    .dashboard-extras {
-        grid-template-columns: 1fr; /* В столбик на телефоне */
-    }
-}
-
-/* ============================================== */
-/* --- АДАПТАЦИЯ ГЛАВНОЙ СТРАНИЦЫ (DASHBOARD) --- */
-/* ============================================== */
-
-@media (max-width: 768px) {
-    /* 1. Блок приветствия (синий) */
-    .welcome-box {
-        padding: 20px;
-        text-align: center; /* Центрируем текст */
-        flex-direction: column; /* Элементы друг под другом */
-    }
-    
-    .welcome-box h1 {
-        font-size: 1.6rem;
-        margin-bottom: 10px;
-    }
-
-    /* Селектор классов (для учителя) на всю ширину */
-    .welcome-box select.class-select {
         width: 100%;
-        margin-top: 15px;
-        box-sizing: border-box;
+        margin-left: 0 !important;
+        margin-top: 10px;
     }
 
-    /* 2. Статистика Ученика (3 плитки: Стрик, Грейд, Прогресс) */
-    .stats-grid {
-        display: flex;
-        flex-direction: column; /* В столбик */
-        gap: 15px;
-    }
-
-    .stat-box {
-        width: 100%;      /* На всю ширину */
-        margin: 0;        /* Убираем лишние отступы */
-        box-sizing: border-box;
-    }
-
-    /* 3. Аналитика Учителя (Графики и Списки) */
-    .analytics-grid,
-    .lists-grid {
-        display: flex;       /* Меняем Grid на Flex */
-        flex-direction: column; /* В столбик */
-        gap: 20px;
-    }
-
-    /* Карточки графиков на всю ширину */
-    .stat-card,
-    .list-card {
-        width: 100%;
-        min-width: 100%;
-    }
-
-    /* Легенда круговой диаграммы */
-    .chart-container {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-    
-    .chart-legend {
-        margin-top: 15px;
-    }
-
-    /* 4. Списки учеников (Мои классы) */
-    .class-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .class-header button.delete-btn {
-        align-self: flex-end; /* Кнопку удаления вправо */
-        margin-top: -30px;    /* Подтягиваем вверх */
-    }
-
+    /* Кнопки в панели учителя */
     .add-student-form {
-        flex-direction: column; /* Поле и кнопка друг под другом */
+        flex-direction: column;
     }
-    
-    .add-student-form input {
+    .add-student-form input, .add-student-form button {
         width: 100%;
     }
-    
-    .add-student-form button {
-        width: 100%;
-        margin-top: 5px;
+    .delete-btn {
+        margin-top: -30px; /* Красиво выравниваем кнопку удаления */
+        align-self: flex-end;
     }
 }
-

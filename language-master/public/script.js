@@ -185,11 +185,36 @@ const app = {
     },
 
     speak(text) {
+        // Отменяем прошлую речь, чтобы не накладывалась
         window.speechSynthesis.cancel();
+
         const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'en-US';
-        msg.rate = 0.9;
+        msg.rate = 0.9; // Скорость
+        msg.pitch = 1;  // Тон
+
+        // 1. Пытаемся найти конкретный голос (Android/iOS часто требуют явного указания)
+        const voices = window.speechSynthesis.getVoices();
+        
+        // Ищем английский голос (Google US English, Apple Samantha и т.д.)
+        const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-GB'));
+        
+        if (enVoice) {
+            msg.voice = enVoice;
+            msg.lang = enVoice.lang;
+        } else {
+            msg.lang = 'en-US'; // Запасной вариант
+        }
+
+        // 2. Исправление для iOS (иногда звук "глотается")
+        msg.onend = function() { console.log('Озвучка завершена'); };
+        msg.onerror = function(e) { console.error('Ошибка озвучки:', e); };
+
         window.speechSynthesis.speak(msg);
+
+        // 3. Костыль для Chrome Android (иногда нужно пнуть синтезатор)
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
     },
 
     async loadProgress() {
@@ -600,7 +625,7 @@ const app = {
     },
 
     async addStudent(classId) {
-         // 1. Находим поле ввода
+        // 1. Находим поле ввода
         const input = document.getElementById(`add-st-${classId}`);
         
         // 2. Превращаем строку в число (Важно!)
@@ -1407,5 +1432,33 @@ async finishLesson() {
         }
     }
 };
+
+// ==========================================
+// ЛОГИКА МОБИЛЬНОГО МЕНЮ
+// ==========================================
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('burger-btn');
+    
+    sidebar.classList.toggle('active');
+    
+    // Меняем иконку (бургер <-> крестик)
+    if (sidebar.classList.contains('active')) {
+        btn.innerHTML = '<i class="fas fa-times"></i>'; // Крестик
+    } else {
+        btn.innerHTML = '<i class="fas fa-bars"></i>';  // Бургер
+    }
+}
+
+// Авто-закрытие меню при клике на кнопку внутри него
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        // Если мы на мобильном (есть класс active), то закрываем
+        if (sidebar.classList.contains('active')) {
+            toggleMobileMenu();
+        }
+    });
+});
 
 document.addEventListener('DOMContentLoaded', () => auth.init());
